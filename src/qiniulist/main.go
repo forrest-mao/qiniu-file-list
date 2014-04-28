@@ -1,14 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"io"
 	"io/ioutil"
 	"log"
-	"net/url"
-	"os"
-	"path"
-	"strconv"
 )
 
 import (
@@ -20,7 +17,7 @@ func main() {
 	ak := flag.String("ak", "", "access key")
 	sk := flag.String("sk", "", "secret key")
 	bucket := flag.String("bucket", "", "bucket")
-	out := flag.String("o", "", "output file dir")
+	out := flag.String("o", "", "output file")
 	flag.Parse()
 	if ak == nil || sk == nil || bucket == nil || out == nil {
 		log.Fatalln("invalid args")
@@ -28,23 +25,28 @@ func main() {
 	}
 	conf.ACCESS_KEY = *ak
 	conf.SECRET_KEY = *sk
-
+	list := []rsf.ListItem{}
 	client := rsf.New(nil)
-	marker = ""
-	err := os.MkdirAll(*out, 0)
-	if err != nil {
-		log.Fatalln("invalid out dir")
-	}
-	count := 0
+	marker := ""
+	var err error
 	for {
-		ret, marker, err := client.ListPrefix(nil, bucket, "", marker, 1000)
+		var ret []rsf.ListItem
+		ret, marker, err = client.ListPrefix(nil, *bucket, "", marker, 1000)
 		if err != nil {
 			if err != io.EOF {
-				log.Fatalln("error occured!")
-				return
+				log.Fatalln("error occured!", err)
+				break
 			}
 		}
-		_path := path.Join(*out, "part"+strconv.Itoa(count))
-		ioutil.WriteFile(_path, ret, 0)
+		list = append(list, ret...)
+	}
+	data, err := json.MarshalIndent(list, "", "")
+	if err != nil {
+		log.Fatalln("list data error", err)
+		return
+	}
+	err = ioutil.WriteFile(*out, data, 0)
+	if err != nil {
+		log.Fatalln("write file failed")
 	}
 }
