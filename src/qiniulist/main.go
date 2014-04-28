@@ -19,7 +19,8 @@ func main() {
 	bucket := flag.String("bucket", "", "bucket")
 	out := flag.String("o", "", "output file")
 	flag.Parse()
-	if ak == nil || sk == nil || bucket == nil || out == nil {
+	if *ak == "" || *sk == "" || *bucket == "" || *out == "" {
+		flag.PrintDefaults()
 		log.Fatalln("invalid args")
 		return
 	}
