@@ -24,7 +24,7 @@ type Item struct {
 	User     string    `json:"user"`
 }
 
-func convert(list []rsf.ListItem) (ret []Item) {
+func convert(list []rsf.ListItem) (ret []Item, size int64) {
 	for _, v := range list {
 		var it Item
 		it.Name = v.Key
@@ -34,6 +34,7 @@ func convert(list []rsf.ListItem) (ret []Item) {
 		it.MimeType = v.MimeType
 		it.User = v.EndUser
 		ret = append(ret, it)
+		size += v.Fsize
 	}
 	return
 }
@@ -67,7 +68,9 @@ func main() {
 			break
 		}
 	}
-	data, err := json.MarshalIndent(convert(list), "", "")
+	items, size := convert(list)
+	log.Println("total size", size)
+	data, err := json.MarshalIndent(items, "", "")
 	if err != nil {
 		log.Fatalln("list data error", err)
 		return
